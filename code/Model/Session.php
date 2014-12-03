@@ -208,9 +208,7 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
         if ($this->_logLevel >= Zend_Log::DEBUG) {
             $this->_log(sprintf("Attempting to take lock on ID %s", $sessionId));
         }
-        if ($this->_dbNum) {
-            $this->_redis->select($this->_dbNum);
-        }
+        $this->_redis->select($this->_dbNum);
         while ($this->_useLocking)
         {
             // Increment lock value for this session and retrieve the new value
@@ -382,6 +380,9 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
         // Set session expiration
         $this->_redis->expire($sessionId, min($this->getLifeTime(), $this->_maxLifetime));
         $this->_redis->exec();
+
+        // Reset flag in case of multiple session read/write operations
+        $this->_sessionWritten = FALSE;
 
         return $sessionData ? $this->_decodeData($sessionData) : '';
     }
