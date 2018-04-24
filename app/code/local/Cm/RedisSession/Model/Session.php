@@ -42,6 +42,8 @@ if (is_dir(__DIR__.'/../lib/src/Cm/RedisSession')) {
 class Cm_RedisSession_Model_Session implements \Zend_Session_SaveHandler_Interface
 {
 
+    const FLAG_READ_ONLY = 'cm-redissession-read-only';
+
     /**
      * @var int|null
      */
@@ -50,14 +52,15 @@ class Cm_RedisSession_Model_Session implements \Zend_Session_SaveHandler_Interfa
     /**
      * @var \Cm\RedisSession\Handler
      */
-    private $sessionHandler;
+    protected $sessionHandler;
 
     public function __construct()
     {
         try {
             $this->sessionHandler = new \Cm\RedisSession\Handler(
                 new Cm_RedisSession_Model_Session_Config(),
-                new Cm_RedisSession_Model_Session_Logger()
+                new Cm_RedisSession_Model_Session_Logger(),
+                Mage::app()->getFrontController()->getAction() && Mage::app()->getFrontController()->getAction()->getFlag('', self::FLAG_READ_ONLY) ?: false
             );
         } catch (\Cm\RedisSession\ConnectionFailedException $e) {
             $this->handleException($e);
@@ -170,10 +173,16 @@ class Cm_RedisSession_Model_Session implements \Zend_Session_SaveHandler_Interfa
      * @param \Exception $e
      * @return void
      */
-    private function handleException(\Exception $e)
+    protected function handleException(\Exception $e)
     {
-        Mage::logException($e);
-        require_once Mage::getBaseDir() . DS . 'errors' . DS . '503.php';
+        if (Mage::getConfig()->getNode('global/redis_session')->is('log_exceptions')) {
+            Mage::logException($e);
+        }
+        if ($e instanceof \Cm\RedisSession\ConcurrentConnectionsExceededException) {
+            require_once Mage::getBaseDir() . DS . 'errors' . DS . '503.php';
+        } else {
+            Mage::printException($e);
+        }
         exit;
     }
 }
