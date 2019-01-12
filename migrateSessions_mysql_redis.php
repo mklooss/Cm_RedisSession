@@ -42,7 +42,7 @@ do {
                         ->having("session_expires > ?", $exptime)
                         ->having("session_id != ?", $lastid)
                         ->limit($batchlimit)
-                        ->order('session_expires');
+                        ->order('session_expires ' . Varien_Data_Collection::SORT_ORDER_DESC);
     $results = $readConnection->fetchAll($query);
     //var_dump($results);
     foreach($results as $row) {
@@ -50,7 +50,7 @@ do {
         $exptime = $row['session_expires'];
         $sesskey = $lastid;
         $redisSession->writeRawSession($sesskey, $row['session_data'], $exptime);
-        echo $lastid . " " . $exptime . "\n";
+        echo $lastid . " " . date('Y-m-d H:i:s', $exptime) . "\n";
     }
     echo "----------------------------------\n";
 } while( !empty($results) );
