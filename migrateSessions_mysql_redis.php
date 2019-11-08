@@ -11,7 +11,7 @@ Mage::app();
 /**
 * Set up the redis client
 */
-$_redis = new Credis_Client('localhost', 6379, 90, True);
+$_redis = new Credis_Client('localhost', 6379, 90, true);
 $_redis->select(0) || Zend_Cache::throwException('The redis database could not be selected.');
 /**
 * Set up the Session Model to help with compression and other misc items.
@@ -39,10 +39,10 @@ do {
     $query = $readConnection->select()
                         ->from(array('cs'=>$resource->getTableName('core/session')),
                                array('session_id', 'session_expires', 'session_data'))
-                        ->having("session_expires > ?", $exptime)
-                        ->having("session_id != ?", $lastid)
+                        ->where("session_expires > ?", $exptime)
+                        ->where("session_id != ?", $lastid)
                         ->limit($batchlimit)
-                        ->order('session_expires ' . Varien_Data_Collection::SORT_ORDER_DESC);
+                        ->order('session_expires');
     $results = $readConnection->fetchAll($query);
     //var_dump($results);
     foreach($results as $row) {
